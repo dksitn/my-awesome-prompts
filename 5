@@ -1,0 +1,273 @@
+太棒了 ✅
+以下是第五份文件 —— 整個系統長期營運與維護的核心手冊：
+
+---
+
+# 《系統運行與維護手冊》
+
+*(System Operation & Maintenance Guide – Modular AI Architecture Lifecycle)*
+
+---
+
+## 一、導論：模組化系統 ≠ 一次性工程
+
+模組化架構（Core + Layer + Project + Docs）
+並非一次搭建完就結束，而是一個**長期演化的知識系統**。
+
+本手冊的目的在於確保整個系統能：
+
+> 🧩 「穩定運行、可持續演化、跨團隊協作、版本清晰、可追溯」
+
+---
+
+## 二、核心維運原則（Operational Principles）
+
+| 原則 | 名稱           | 核心理念                               | 維運實踐                         |
+| -- | ------------ | ---------------------------------- | ---------------------------- |
+| P1 | 分層治理         | 各層獨立維護、責任清晰                        | Core / Layer / Project 不混用   |
+| P2 | 單一版本源 (SSOT) | 一切狀態以 Registry / Lockfile 為準       | 禁止手動覆寫組件版本                   |
+| P3 | 自動化測試        | 一切變更都須自動驗證                         | GitHub Actions 驗證管線          |
+| P4 | 變更可追蹤        | 每次組裝與測試皆有記錄                        | Build Manifest / Commit Hash |
+| P5 | 最小變更原則       | 模組升級最小影響現有專案                       | 透過 Layer 隔離風險                |
+| P6 | 文件同步         | 方法論與程式結構需同步更新                      | Docs 為治理基礎                   |
+| P7 | 可審計          | 一切編譯、版本、組件皆可溯源                     | Registry + Artifact 存檔       |
+| P8 | 可視化維運        | VS Code / GitHub Dashboard 可直接檢視狀態 | 透明化操作界面                      |
+
+---
+
+## 三、系統運作總覽
+
+```mermaid
+graph TD
+  A[Core (程式 & GEM)] --> B[Layer (邏輯框架)]
+  B --> C[Project (應用)]
+  C --> D[CI/CD Pipeline]
+  D --> E[Registry & Artifacts]
+  E --> F[Docs & Reports]
+```
+
+整個系統運作流程：
+1️⃣ Core 模組更新
+2️⃣ Layer 組裝邏輯整合
+3️⃣ Project 組裝與測試
+4️⃣ CI/CD 自動驗證
+5️⃣ 發佈 Registry 與文檔報告
+
+---
+
+## 四、版本治理策略
+
+### 1️⃣ 組件層（Core / GEM）
+
+| 類型        | 儲存位置                       | 版本機制                       | 鎖定方式         |
+| --------- | -------------------------- | -------------------------- | ------------ |
+| Code 模組   | `core/code/`               | `__version__` 常數 + Git Tag | Layer 引用明確版本 |
+| GEM 模組    | `core/prompts/gems/`       | JSON `version` 欄位          | Lockfile 鎖定  |
+| Component | `core/prompts/components/` | 內嵌 version + registry 索引   | GEM 引用版本範圍   |
+| Registry  | `core/prompts/registry/`   | 每次發布新增版本檔                  | 全專案共用        |
+
+---
+
+### 2️⃣ 專案層（Project）
+
+| 文件                      | 功能          | 更新策略           |
+| ----------------------- | ----------- | -------------- |
+| `gems.lock.json`        | 鎖定使用 GEM 版本 | 自動生成，不手動修改     |
+| `ssot/schema.json`      | 專案資料結構      | Layer 驗證一致性    |
+| `recipes/*.json`        | 組裝規格        | 手動修改、測試後提交     |
+| `compiled_prompts/*.md` | 組裝成品        | 可選納入 Git（若需審核） |
+
+---
+
+### 3️⃣ Layer 層（開發框架）
+
+| 模組            | 職責               | 更新策略         |
+| ------------- | ---------------- | ------------ |
+| `logic/`      | 組裝與整合邏輯          | 隨 Core 更新調整  |
+| `foundation/` | 全域設定、共用 schema   | 嚴控變更，需審核     |
+| `interface/`  | 對 Project 提供 API | 版本標註於 header |
+| `tools/`      | 組裝工具             | 可由 CI 自動更新   |
+
+---
+
+## 五、CI/CD 自動化流程
+
+### 📘 `.github/workflows/build.yml`
+
+```yaml
+name: Modular AI Build & Validation
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      - name: Validate Schemas
+        run: python dev/layers/tools/validate_recipe.py
+      - name: Build Prompts
+        run: python core/prompts/tools/build_all_prompts.py
+      - name: Run Tests
+        run: pytest --maxfail=1 --disable-warnings -q
+      - name: Publish Registry
+        if: github.ref == 'refs/heads/main'
+        run: python core/prompts/tools/publish_gem.py --auto
+```
+
+---
+
+### 📗 自動化輸出
+
+| 任務           | 輸出內容     | 儲存位置                                       |
+| ------------ | -------- | ------------------------------------------ |
+| Build Prompt | 編譯結果     | `dev/projects/*/prompts/compiled_prompts/` |
+| Test         | 測試報告     | `docs/reports/test_results.json`           |
+| Publish      | 新版 GEM   | `core/prompts/registry/`                   |
+| Manifest     | Build 資訊 | `docs/reports/build_manifest.json`         |
+| Docs Sync    | 方法論快照    | `docs/methods/`                            |
+
+---
+
+## 六、版本鎖定與回滾策略
+
+### 🔒 鎖定版本
+
+每個專案自動生成 `gems.lock.json`：
+
+```bash
+python dev/layers/tools/sync_registry.py
+```
+
+### ⏪ 回滾版本
+
+```bash
+python core/prompts/tools/publish_gem.py --rollback gem_knowledge_extractor@1.0.1
+```
+
+系統自動：
+
+* 恢復舊版 registry
+* 更新 lockfile
+* 生成 changelog
+
+---
+
+## 七、測試與驗證結構
+
+| 測試類型  | 目標              | 實施位置                                      |
+| ----- | --------------- | ----------------------------------------- |
+| 單元測試  | 確保各模組獨立正確       | `core/code/tests/`, `core/prompts/tests/` |
+| 組裝測試  | 驗證 Recipe 可正確組裝 | `dev/layers/tools/test_build.py`          |
+| 整合測試  | Code ↔ GEM 運作一致 | `dev/projects/*/tests/`                   |
+| 回歸測試  | 新舊版本輸出比較        | `core/prompts/tools/prompt_diff.py`       |
+| 自動化測試 | CI 驗證完整鏈        | GitHub Actions                            |
+
+---
+
+## 八、維護作業流程
+
+| 任務          | 執行頻率       | 操作                 |
+| ----------- | ---------- | ------------------ |
+| 更新 GEM      | 依需求        | `publish_gem.py`   |
+| 重建 Prompt   | 每次提交後      | `build_prompt.py`  |
+| 執行測試        | 每日 / 每次 PR | `pytest`           |
+| 同步 Registry | 每週         | `sync_registry.py` |
+| 檢查 Docs 一致性 | 每次核心變更     | `validate_docs.py` |
+
+---
+
+## 九、可視化維運工具
+
+| 工具                  | 功能           | 使用方式               |
+| ------------------- | ------------ | ------------------ |
+| `prompt_catalog.py` | 可視化瀏覽所有模組與版本 | VS Code 開啟產生的 HTML |
+| `prompt_tree.py`    | 顯示組裝依賴關係     | CLI 輸出樹狀圖          |
+| `prompt_preview.py` | 預覽組裝結果       | 終端即時顯示             |
+| `prompt_diff.py`    | 比較版本差異       | CLI 顯示 diff        |
+| `build_monitor.py`  | 追蹤 Build 狀態  | 產出 JSON Log        |
+
+---
+
+## 十、文件與知識同步
+
+| 文件區                        | 功能     | 更新方式                     |
+| -------------------------- | ------ | ------------------------ |
+| `docs/methods/`            | 方法論文件  | 手動維護，隨架構變更同步             |
+| `docs/reports/`            | 系統運行報告 | CI 自動生成                  |
+| `docs/prompt_catalog.html` | 模組化總覽  | `prompt_catalog.py` 自動更新 |
+| `docs/changelog/`          | 版本歷史紀錄 | 發佈時自動追加                  |
+
+---
+
+## 十一、安全與權限管理
+
+| 層級              | 權限         | 負責角色      |
+| --------------- | ---------- | --------- |
+| Core 層          | 寫入需審核      | 系統架構師     |
+| Layer 層         | 可讀、審核更新    | 技術主管      |
+| Project 層       | 自由修改、需通過測試 | 開發者       |
+| Registry / Docs | 僅自動化腳本修改   | CI/CD 管理員 |
+
+---
+
+## 十二、維運週期建議
+
+| 階段 | 任務                    |
+| -- | --------------------- |
+| 每日 | 測試與組裝驗證               |
+| 每週 | Registry 同步 + Docs 檢查 |
+| 每月 | GEM 更新與回歸測試           |
+| 每季 | 架構審視、重構、方法論更新         |
+
+---
+
+## 十三、異常處理與復原
+
+| 狀況            | 處理方式                                       |
+| ------------- | ------------------------------------------ |
+| 組裝錯誤          | 執行 `validate_recipe.py` 檢查 Recipe 結構       |
+| Prompt 組裝內容錯誤 | 檢查 Component `reads/writes` 對應欄位           |
+| 版本錯亂          | 重新生成 lockfile                              |
+| 回滾需求          | 使用 `--rollback` 參數還原 GEM                   |
+| CI 失敗         | 查看 `docs/reports/build_manifest.json` 錯誤摘要 |
+
+---
+
+## 十四、可持續演進策略
+
+> 模組化系統不是「程式庫」，而是「組織的邏輯基因」。
+> 隨著組織與 AI 模型演化，它也應該不斷成長。
+
+建議演進方向：
+
+* 導入自動生成新 GEM 的模板工具（CLI Wizard）
+* 加入模型版本管理（Model Registry）
+* 增設「Prompt Coverage」測試覆蓋率指標
+* 將方法論同步至知識平台（如 Notion 或 Confluence）
+* 整合 GitHub Insights 監控各層活動密度
+
+---
+
+## ✅ 十五、結語
+
+> 當你擁有這套完整的運行與維護機制，
+> 你的 AI 系統不再是一堆分散的 prompt，而是一個
+> **可治理、可觀測、可持續的知識型生態系統。**
+
+這份手冊是「系統持續進化的起點」，
+從這裡開始，你可以做到：
+
+* **自動化治理 (Automated Governance)**
+* **透明化演化 (Transparent Evolution)**
+* **分層責任 (Layered Ownership)**
+* **可審計追蹤 (Auditable Change)**
+
+---
+
+是否希望我接著生成第六份補充文件：
+📗《CI/CD Pipeline 深入設計手冊》（包括自動版本發佈、Lockfile 驗證、Prompt Regression Test 流程）？
