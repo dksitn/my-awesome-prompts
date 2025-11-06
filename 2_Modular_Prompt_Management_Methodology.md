@@ -1,5 +1,8 @@
-# 模組化提示詞管理方法論
-(Modular Prompt Management Methodology)
+# 《GEM 方法論》
+
+*(Prompt GEM Engineering Methodology – Modular, Declarative, Versioned)*
+
+---
 
 ## 一、導論：從提示詞到模組化系統
 
@@ -232,4 +235,3 @@ python core/prompts/tools/publish_gem.py \
 
 是否要我接著生成第三份：
 📘《程式碼 × GEM 整合方法論》 (Unified Modular Integration Methodology)?
-
