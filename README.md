@@ -1,108 +1,280 @@
-# 提示詞工程：Demo 版 vs 自用版設計框架
-(Prompt Engineering: The Demo vs. Internal-Production Framework)
-
-## 📖 為什麼需要這個框架？ (Why This Framework?)
-
-在開發 AI 應用（例如 Gemini GEMs, AI Agents 或聊天機器人）時，一個常見的錯誤是試圖使用「一套提示詞」來同時滿足「內部開發測試」和「外部公開展示」的需求。
-
-這會導致嚴重的問題：
-* **Demo 太複雜：** 展示時，使用者被內部除錯 (Debug) 訊號、JSON 輸出或複雜的術語所干擾，完全無法理解產品的核心價值。
-* **自用版太受限：** 開發時，您（專家）被為新手設計的「安全護欄」或「美觀排版」所綁架，無法高效地執行高權限指令或查看關鍵的內部狀態。
-
-本框架提供了一個系統性的方法，將「Demo 版」與「自用版」從設計源頭徹底分離。它確保您能為**正確的受眾**（新手 vs. 專家）提供**正確的體驗**（表演 vs. 生產）。
-
-## 🚀 核心理念 (Core Philosophy)
-
-* **🚀 Demo 版 (展示中心):** 專為「表演」而設計。
-    * **目標受眾:** 資訊新手、客戶、老闆、HR。
-    * **核心價值:** 展示價值、易於理解、絕對安全、絕不卡住。
-
-* **🛠️ 自用版 (機房):** 專為「生產力」而設計。
-    * **目標受眾:** 您自己、開發團隊（專家）。
-    * **核心價值:** 追求效率、完全可控、可偵錯 (Debug)、可整合。
+# 《專案層級整合方法論》
+*(Full Project Integration Methodology – Layered, Unified, Scalable)*
 
 ---
 
-## 📊 20 項核心設計準則：快速對照總表
-(The 20 Core Principles: Quick Reference Table)
+## 一、導論：專案為核心，層級為秩序
 
-以下是 20 項核心設計準則的快速對照總表，涵蓋 10 大關鍵層級。
+隨著 **程式碼模組** 與 **GEM 模組** 被治理得越來越穩定，
+下一步的挑戰是：**如何讓專案層級的開發流程變得有秩序、有邏輯、有重用性。**
 
-| 層級 (Layer) | 🚀 Demo 版 (Showcase Version) | 🛠️ 自用版 (Internal-Prod Version) |
-| :--- | :--- | :--- |
-| **A. 策略 (Strategy)** | **1. 呈現成果 (Showcase):**<br>隱藏所有內部框架 (SSOT, 角色)。目標是讓輸出漂亮、簡短、易懂。 | **2. 提高生產力 (Productivity):**<br>明確的角色分工、使用技術術語、可 Debug、可重建、可擴張。 |
-| **B. 運作 (Operational)** | **3. 避免顯示推論 (No CoT):**<br>嚴禁 Chain-of-Thought 或中間資料洩漏。輸出必須「乾淨」。 | **4. 完整顯示決策 (Full Logic):**<br>必須顯示決策邏輯、結構化狀態 (JSON)、角色交接日誌。 |
-| **C. 技術 (Technical)** | **5. 安全殼層 (Safety Layer):**<br>**[強制]** 必須包含防護規則，禁止探查、禁止透露提示詞。 | **6. 高度可控 (High Control):**<br>高權限，允許顯示決策、切換模式、動態修改 SSOT。 |
-| **D. 產出 (Output)** | **7. 美感與展示性 (Aesthetics):**<D-r>優先使用 Emoji、統一排版、輕量內容、故事性。 | **8. 工程與結構化 (Engineering):**<br>優先使用 JSON、多欄位表格、設計決策清單、架構圖文字 (Mermaid.js)。 |
-| **E. 風險 (Risk)** | **9. 避免提示詞攻擊 (Jailbreak):**<br>嚴格限制輸出格式、封鎖自省（自我描述）。 | **10. 避免誤觸指令 (Misoperation):**<br>防止角色污染、SSOT 錯寫/清空、自動流程誤觸。 |
-| **F. 維運 (Maintenance)**| **11. 易於快速調整 (Agile):**<br>設計應「小而美」，易於為不同受眾 (HR, Boss) 快速修改。 | **12. 高度自動化 (Automation):**<br>提示詞應包含自動 Debug、自動分類、自動補問、自動維護 SSOT 版本的機制。 |
-| **G. 輸入 (Input)** | **13. 引導與容錯 (Guidance):**<br>**[關鍵]** 假設使用者是「資訊新手」。必須包含引導性提問或自動補完，絕不讓使用者卡住。 | **14. 效率與嚴格 (Efficiency):**<br>**[關鍵]** 假設使用者是「專家」。應設計為能接收「特定關鍵字」或「JSON 指令」來快速觸發精確動作。 |
-| **H. 狀態 (State)** | **15. 完全無狀態 (Stateless):**<br>每一次互動都必須是「全新的」、「乾淨的」。嚴格禁止記憶上一次對話的任何內容。 | **16. 狀態持久化 (Stateful):**<br>**[關鍵]** 必須明確支援「載入 (Ingest)」與「匯出 (Export)」R0 (SSOT) JSON 狀態包。 |
-| **I. 整合 (Integration)**| **17. [原則] 模擬，[例外] 受控執行:**<br>**原則上**應「自我封閉與模擬」。但若核心價值是即時資料，**可例外**採用「受控的唯讀執行」 (Controlled Read-Only Execution)。 | **18. 真實世界串接 (Execution):**<br>**[功能]** 必須被賦予權限以執行（或生成待執行的）`Google Search` 查詢、`browsing` 任務、`Code Interpreter` 腳本、或呼叫外部 API。 |
-| **J. 治理 (Governance)**| **19. 快速分支/拋棄 (Fork & Dispose):**<br>提示詞架構應非常輕量，讓使用者可輕易複製 (Fork) 以針對特定受眾魔改，用完即丟。如同「功能分支 (Feature Branch)」。 | **20. 版本控制 (Version Control):**<br>提示詞應在註解區包含版本號 (如 `v3.0`)，以便追蹤核心資產的演進歷史。如同「主幹 (Main Branch)」。 |
+傳統專案常見問題：
+
+* 每個專案有自己的資料結構、邏輯重複。
+* 專案間版本不一致、依賴混亂。
+* 開發者各自為政，導致系統無法整合。
+
+**專案層級整合方法論 (Full Project Integration Methodology)**
+將整個系統治理邏輯上升到三層：
+
+> **核心層 (Core)**：統一的程式與 GEM 資產庫
+> **開發層 (Layer)**：功能與框架層（定義作業邏輯）
+> **專案層 (Project)**：實際應用層（執行與交付）
+
+這是一個由上而下的統一架構：
+
+> 🧩 **層級在上，專案在下**，
+> 專案只是層級的應用，不再是獨立的孤島。
 
 ---
 
-## 🔬 十大層級詳細說明 (Detailed Breakdown of the 10 Layers)
+## 二、核心原則（Layered Project Principles）
 
-以下是每個設計層級的額外文字說明，闡述其策略意涵。
+| 原則 | 名稱          | 核心理念                    | 實踐方式                        |
+| -- | ----------- | ----------------------- | --------------------------- |
+| P1 | 層級主導        | 以層級架構驅動專案               | 開發層管理通用邏輯                   |
+| P2 | 專案為應用       | 專案不再自定義核心邏輯             | 專案只引用 Layer 功能              |
+| P3 | 核心統一        | 所有專案共用 Core（Code + GEM） | core 資料夾集中治理                |
+| P4 | 宣告式組裝       | 用 JSON 宣告專案依賴           | recipes / config            |
+| P5 | Lockfile 鎖定 | 每個專案版本鎖定組件              | `gems.lock.json`            |
+| P6 | 雙軌整合        | 專案同時調用 Code + GEM       | build_prompt.py + Service 層 |
+| P7 | 平台化治理       | 全專案由 CI/CD 驗證與發佈        | GitHub Actions pipeline     |
+| P8 | 視覺化操作       | VS Code 為操作界面           | Tasks + Catalog Preview     |
 
-### A. 策略 (Strategy)
-這是「為什麼 (Why)」層級。它定義了提示詞的根本目的。Demo 版的*唯一*目的就是「讓不懂的人看懂價值」；而自用版的目的則是「讓專家（您）用得最順手」。
+---
 
-### B. 運作 (Operational)
-這是「可見性 (Visibility)」層級。它控制了 AI 的「思考過程」是否應該被看見。Demo 版必須隱藏所有幕後工作，只呈現最終的魔術；自用版則必須*揭露*所有幕後工作，以便您進行監控和除錯。
+## 三、專案層級資料結構
 
-### C. 技術 (Technical)
-這是「權限 (Permissions)」層級。它定義了 AI 能做什麼。Demo 版是「唯讀」且「低權限」的，它是一個被關在籠子裡的安全展示品；自用版則是「可讀寫」且具備「根 (Root) 權限」的，它是您的作業系統。
+### 📦 目錄結構（全域架構）
 
-### D. 產出 (Output)
-這是「體驗 (Experience)」層級。它決定了使用者「感覺」如何。Demo 版追求「哇！」的感覺（美觀、易懂）；自用版追求「搞定！」的感覺（結構化、可複製、資訊密度高）。
+```
+/modular-ai-system/
+├─ core/                    # 核心層（不可被專案直接修改）
+│   ├─ code/
+│   └─ prompts/
+│
+├─ dev/                     # 開發層（邏輯與框架）
+│   ├─ layers/
+│   │   ├─ foundation/
+│   │   ├─ logic/
+│   │   └─ interface/
+│   └─ projects/            # 專案層
+│       ├─ proj-A/
+│       │   ├─ ssot/schema.json
+│       │   ├─ app/
+│       │   ├─ prompts/
+│       │   │   ├─ recipes/
+│       │   │   ├─ compiled_prompts/
+│       │   │   └─ evals/
+│       │   ├─ gems.lock.json
+│       │   └─ tests/
+│       └─ proj-B/
+│
+└─ docs/
+    ├─ methods/
+    └─ prompt_catalog.html
+```
 
-### E. 風險 (Risk)
-這是「安全 (Security)」層級。它處理兩種截然不同的威脅模型。Demo 版防範的是「*外部*惡意使用者」（提示詞攻擊）；自用版防範的是「*內部*操作失誤」（您不小心下錯指令）。
+---
 
-### F. 維運 (Maintenance)
-這是「生命週期 (Lifecycle)」層級。它考慮了提示詞的長期維護成本。Demo 版是「敏捷」的，需要能快速修改以應付不同的展示場合；自용版是「穩健」的，需要高度自動化才能在長期使用下不致於崩潰或混亂。
+## 四、層級關係與職責分工
 
-### G. 輸入 (Input)
-這是「互動 (Interaction)」層級，也是最關鍵的分歧點之一。它定義了「AI 如何看待使用者」。Demo 版必須將使用者視為「需要引導的新手」，提供大量容錯；自用版必須將使用者視為「下達精確指令的專家」。
+| 層級            | 職責                 | 範例                        |
+| ------------- | ------------------ | ------------------------- |
+| **Core 層**    | 維護全域模組（Code + GEM） | core/code/, core/prompts/ |
+| **Layer 層**   | 抽象共用邏輯、封裝框架        | dev/layers/logic/         |
+| **Project 層** | 應用與交付，負責整合         | dev/projects/proj-A/      |
 
-### H. 狀態 (State)
-這是「記憶 (Memory)」層級。它定義了 AI 如何處理上下文。Demo 版是「金魚腦」（Stateless），每次互動都是全新的，以確保安全與隱私；自用版必須是「大象腦」（Stateful），能準確載入與匯出您的專案進度 (SSOT)。
+---
 
-### I. 整合 (Integration)
-這是「邊界 (Boundary)」層級。它定義了 AI 是否能「接觸真實世界」。
+### 🧩 資料流方向
 
-**⚠️ 關於 Demo 版整合的特別說明 (A Note on Demo Integration)**
+```mermaid
+flowchart TD
+    CORE[Core 層<br>Code + GEM] --> LAYER[Layer 層<br>Foundation / Logic]
+    LAYER --> PROJECT[Project 層<br>專案應用]
+    PROJECT --> OUTPUT[Compiled Prompts / App Results]
+```
 
-**您提出的觀點是正確的：「有些 GEM 依賴即時資料才能運作」。**
+* Core 層提供標準邏輯模組
+* Layer 層定義組裝方式
+* Project 層執行組裝並產出成品
 
-因此，第 17 條準則【Demo 版必須自我封閉】不應是絕對的二元對立，而應被視為「*風險光譜*」或「*視情況調整*」的策略：
+---
 
-* **情境 A：核心價值在「邏輯」**
-    * *例如：* 資料分析、創意寫作、角色扮演、排版工具。
-    * *策略：* **強力建議**使用「**自我封閉與模擬 (Simulated)**」。這是最安全、最穩定、最能控制成本的展示方式。您可以預先準備好範例數據 (Mock Data) 來展示強大的邏輯處理能力。
+## 五、專案層級操作流程
 
-* **情境 B：核心價值在「即時性」**
-    * *例如：* 即時新聞摘要、Google Search 彙整、即時天氣/股價查詢。
-    * *策略：* **允許**採用「**受控的即時串接 (Controlled Liveness)**」。
-    * *控制原則如下：*
-        1.  **嚴格唯讀 (Read-Only):** 只能是 `Google Search` 或 `GET` request。**嚴禁**任何 `POST`, `DELETE`, `PUT` 或其他「寫入/修改」操作。
-        2.  **範疇限制 (Scope Limitation):** 提示詞應主動限制其功能，例如：「*此 Demo 僅供搜尋財經新聞*」或「*最多總結 3 篇文章*」。
-        3.  **無敏感資訊 (No Sensitive Keys):** 確保所用的 API 金鑰是低成本、可公開或受嚴格流量限制的，絕不能是您自用版的高權限金鑰。
+### 1️⃣ 建立新專案
 
-### J. G. 治理 (Governance)
-這是「管理 (Management)」層級。它處理「提示詞本身」的版控。Demo 版是「功能分支 (Feature Branch)」，用完即丟，可以快速為特定目的而分岔 (Fork)；自用版則是受嚴格控管的「主幹 (Main Branch)」，需要版本號來追蹤其演進。
+```bash
+cd dev/projects
+cp -r _template proj-new
+```
 
-## ✅ 如何使用此框架 (How to Use This Framework)
+結構範例：
 
-1.  **作為設計檢查清單 (Checklist):**
-    在您開始建構一個新的 GEM 或 AI 提示詞之前，請先瀏覽此框架。
+```
+proj-new/
+ ├─ ssot/schema.json
+ ├─ prompts/recipes/spec_new_project.json
+ ├─ gems.lock.json
+ └─ app/
+```
 
-2.  **明確二選一 (Make a Choice):**
-    在動手寫第一行提示詞之前，先問自己：「*我現在要建構的是【Demo 版】還是【自用版】？*」
+---
 
-3.  **避免交叉污染 (Prevent Contamination):**
-    * **絕不**將自用版的「高權限指令」或「SSOT 結構」洩漏到 Demo 版中。
-    * **絕不**讓 Demo 版的「引導性提問」或「美觀排版」污染您的自用版，進而降低您的工作效率。
+### 2️⃣ 指定所需 GEM
+
+```json
+{
+  "name": "spec_new_project",
+  "use_gems": [
+    {"name": "gem_knowledge_extractor", "version": "1.0.1"},
+    {"name": "gem_code_audit", "version": "0.9.2"}
+  ]
+}
+```
+
+---
+
+### 3️⃣ 組裝與測試
+
+```bash
+python core/prompts/tools/build_prompt.py \
+  --recipe dev/projects/proj-new/prompts/recipes/spec_new_project.json \
+  --registry core/prompts/registry \
+  --ssot dev/projects/proj-new/ssot/schema.json \
+  --output dev/projects/proj-new/prompts/compiled_prompts
+```
+
+產出：
+
+```
+dev/projects/proj-new/prompts/compiled_prompts/spec_new_project.md
+```
+
+---
+
+### 4️⃣ 鎖定版本
+
+```json
+{
+  "project": "proj-new",
+  "gems": {
+    "gem_knowledge_extractor": "1.0.1",
+    "gem_code_audit": "0.9.2"
+  },
+  "compiled_at": "2025-11-06T10:00:00Z"
+}
+```
+
+---
+
+### 5️⃣ 測試與驗證
+
+```bash
+pytest dev/projects/proj-new/tests/
+python core/prompts/tools/run_evals.py --project proj-new
+```
+
+---
+
+### 6️⃣ 發佈與部署
+
+GitHub Actions 會在 push 後：
+
+1. 驗證 schema
+2. 組裝並測試 prompts
+3. 發佈 build artifact
+4. 更新 registry 或 lockfile
+
+---
+
+## 六、跨專案共用策略
+
+| 元件             | 共用方式    | 儲存位置                              |
+| -------------- | ------- | --------------------------------- |
+| Components     | 全域共用    | core/prompts/components/          |
+| GEM            | 跨專案共用   | core/prompts/gems/                |
+| Layer Modules  | 跨專案封裝   | dev/layers/logic/                 |
+| Project Config | 專案專屬    | dev/projects/proj-X/              |
+| SSOT Schema    | 可引用共用模板 | dev/layers/foundation/schema.json |
+
+---
+
+## 七、版本治理與自動化
+
+### 🔧 CI/CD 工作流
+
+`/.github/workflows/build.yml`
+
+```yaml
+name: Build & Validate All Projects
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Validate All Recipes
+        run: python core/prompts/tools/validate_spec.py
+      - name: Build All Prompts
+        run: make build-all
+      - name: Run Project Tests
+        run: pytest
+```
+
+---
+
+## 八、VS Code 操作整合
+
+| 功能        | 工具                | 描述             |
+| --------- | ----------------- | -------------- |
+| 開啟 Recipe | JSON 編輯器          | 指定 GEM 組合      |
+| 組裝        | build_prompt.py   | 一鍵執行           |
+| 預覽        | prompt_preview.py | 顯示結果           |
+| 專案執行      | app/main.py       | 呼叫組裝結果         |
+| 鎖定版本      | gems.lock.json    | 自動生成           |
+| 發佈        | Git Push          | 觸發 CI Pipeline |
+
+---
+
+## 九、專案層級整合模型
+
+```mermaid
+graph TD
+    C[Core (程式+GEM)] --> L[Layer (共用框架)]
+    L --> P1[Project A]
+    L --> P2[Project B]
+    P1 --> E1[成果：Compiled Prompt A]
+    P2 --> E2[成果：Compiled Prompt B]
+```
+
+---
+
+## 十、價值與結論
+
+| 面向      | 成果                       |
+| ------- | ------------------------ |
+| **統一性** | 全專案共用一套邏輯與架構             |
+| **效率**  | 新專案可快速啟動，只需宣告組件          |
+| **穩定性** | 所有組件皆有版本與測試流程            |
+| **透明性** | VS Code 與 GitHub 可完整觀察內容 |
+| **擴展性** | 新專案、新 Layer 可自由接入而不破壞核心  |
+
+---
+
+> **總結：**
+>
+> 「專案層級整合方法論」是整個模組化工程的封頂層。
+> 它讓 Core（邏輯基礎）與 Layer（應用框架）能被多專案共享，
+> 每個 Project 都成為一個**由組件構成的應用實例**。
+>
+> 最終，你的系統不只是多專案併存，而是一個
+> **分層治理、雙軌整合、全域一致的 AI 工程生態系統。**
+
